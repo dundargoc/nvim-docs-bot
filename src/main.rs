@@ -41,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Syncing is important to synchronize the client state with the server.
     // This method will never return.
-    client.sync(settings).await?; // this essentially loops until we kill the bot
+    Box::pin(client.sync(settings)).await?; // this essentially loops until we kill the bot
 
     Ok(())
 }
@@ -55,10 +55,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
     // First, we need to unpack the message: We only want messages from rooms we are
     // still in and that are regular text messages - ignoring everything else.
     if let Room::Joined(room) = room {
-        let msg_body = match event.content.msgtype {
-            MessageType::Text(TextMessageEventContent { body, .. }) => body,
-            _ => return,
-        };
+        let MessageType::Text(TextMessageEventContent { body: msg_body, .. }) = event.content.msgtype else { return };
 
         let trigger = "!h";
 
@@ -74,9 +71,10 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
 
             let tag = msg_body.split(trigger).collect::<Vec<&str>>()[1].trim();
 
-            let message = match tags.get(tag) {
-                Some(file) => format!("https://neovim.io/doc/user/{file}.html#{tag}"),
-                None => format!("No help found for {tag}!"),
+            let message = if let Some(file) = tags.get(tag) {
+                format!("https://neovim.io/doc/user/{file}.html#{tag}")
+            } else {
+                format!("No help found for {tag}!")
             };
             room.send(RoomMessageEventContent::text_plain(message), None)
                 .await
