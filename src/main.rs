@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 use matrix_sdk::{
     config::SyncSettings,
     room::Room,
@@ -7,24 +9,23 @@ use matrix_sdk::{
     ruma::user_id,
     Client,
 };
-
-use std::process::exit;
-
+use std::collections::HashMap;
 use std::env;
+use std::process::exit;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // parse the command line for password
-    let password = match env::args().nth(1) {
-        Some(a) => a,
-        _ => {
-            eprintln!("Usage: {} <password>", env::args().next().unwrap());
-            exit(1)
-        }
+    let Some(password) = env::args().nth(1) else {
+        eprintln!("Usage: {} <password>", env::args().next().unwrap());
+        exit(1)
     };
 
     let username = user_id!("@nvim-bot:matrix.org");
-    let client = Client::builder().server_name(username.server_name()).build().await?;
+    let client = Client::builder()
+        .server_name(username.server_name())
+        .build()
+        .await?;
 
     client.login_username(username, &password).send().await?;
 
@@ -59,17 +60,27 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
             _ => return,
         };
 
-        // here comes the actual "logic": when the bot see's a `!party` in the message,
-        // it responds
-        if msg_body.contains("!h") || msg_body.contains(":h") {
-            let content = RoomMessageEventContent::text_plain(
-                "Help requested, but I can't do anything at the moment.",
-            );
+        let trigger = "!h";
 
-            // send our message to the room we found the "!party" command in
-            // the last parameter is an optional transaction id which we don't
-            // care about.
-            room.send(content, None).await.unwrap();
+        if msg_body.contains(trigger) {
+            let mut tags = HashMap::new();
+            let text = std::fs::read_to_string("src/tags").unwrap();
+            for line in text.lines() {
+                let line_split = line.split_whitespace().collect::<Vec<&str>>();
+                let tag = line_split[0];
+                let file = line_split[1].replace(".txt", "");
+                tags.insert(tag, file);
+            }
+
+            let tag = msg_body.split(trigger).collect::<Vec<&str>>()[1].trim();
+
+            let message = match tags.get(tag) {
+                Some(file) => format!("https://neovim.io/doc/user/{file}.html#{tag}"),
+                None => format!("No help found for {tag}!"),
+            };
+            room.send(RoomMessageEventContent::text_plain(message), None)
+                .await
+                .unwrap();
         }
     }
 }
