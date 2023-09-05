@@ -1,1 +1,0 @@
-# nvim-docs-bot
