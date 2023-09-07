@@ -61,9 +61,9 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
             return;
         };
 
-        let trigger = "!h";
-
-        if !msg_body.contains(trigger) {
+        // Add space after the "h" to prevent message like "!hello" to trigger
+        let trigger = "!h ";
+        if !msg_body.starts_with("trigger") {
             return;
         }
 
