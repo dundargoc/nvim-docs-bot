@@ -63,9 +63,9 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
 
         // Add space after the "h" to prevent message like "!hello" to trigger
         let trigger = "!h ";
-        if !msg_body.starts_with("trigger") {
+        let Some(tag) = msg_body.strip_prefix(trigger) else {
             return;
-        }
+        };
 
         let mut tags = HashMap::new();
         let text = std::fs::read_to_string("src/tags").unwrap();
@@ -75,8 +75,6 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
             let file = line_split[1].replace(".txt", "");
             tags.insert(tag, file);
         }
-
-        let tag = msg_body.split(trigger).collect::<Vec<&str>>()[1].trim();
 
         let message = if let Some(file) = tags.get(tag) {
             format!("https://neovim.io/doc/user/{file}.html#{tag}")
