@@ -68,7 +68,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         };
 
         let mut tags = HashMap::new();
-        let text = std::fs::read_to_string("src/tags").unwrap();
+        let text = tokio::fs::read_to_string("src/tags").await.unwrap();
         for line in text.lines() {
             let line_split = line.split_whitespace().collect::<Vec<&str>>();
             let tag = line_split[0];
