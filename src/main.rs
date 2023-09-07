@@ -54,35 +54,36 @@ async fn main() -> anyhow::Result<()> {
 async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
     // First, we need to unpack the message: We only want messages from rooms we are
     // still in and that are regular text messages - ignoring everything else.
-    if let Room::Joined(room) = room {
-        let MessageType::Text(TextMessageEventContent { body: msg_body, .. }) =
-            event.content.msgtype
-        else {
-            return;
-        };
+    let Room::Joined(room) = room else {
+        return;
+    };
 
-        // Add space after the "h" to prevent message like "!hello" to trigger
-        let trigger = "!h ";
-        let Some(tag) = msg_body.strip_prefix(trigger) else {
-            return;
-        };
+    let MessageType::Text(TextMessageEventContent { body: msg_body, .. }) = event.content.msgtype
+    else {
+        return;
+    };
 
-        let mut tags = HashMap::new();
-        let text = tokio::fs::read_to_string("src/tags").await.unwrap();
-        for line in text.lines() {
-            let line_split = line.split_whitespace().collect::<Vec<&str>>();
-            let tag = line_split[0];
-            let file = line_split[1].replace(".txt", "");
-            tags.insert(tag, file);
-        }
+    // Add space after the "h" to prevent message like "!hello" to trigger
+    let trigger = "!h ";
+    let Some(tag) = msg_body.strip_prefix(trigger) else {
+        return;
+    };
 
-        let message = if let Some(file) = tags.get(tag) {
-            format!("https://neovim.io/doc/user/{file}.html#{tag}")
-        } else {
-            format!("No help found for {tag}!")
-        };
-        room.send(RoomMessageEventContent::text_plain(message), None)
-            .await
-            .unwrap();
+    let mut tags = HashMap::new();
+    let text = tokio::fs::read_to_string("src/tags").await.unwrap();
+    for line in text.lines() {
+        let line_split = line.split_whitespace().collect::<Vec<&str>>();
+        let tag = line_split[0];
+        let file = line_split[1].replace(".txt", "");
+        tags.insert(tag, file);
     }
+
+    let message = if let Some(file) = tags.get(tag) {
+        format!("https://neovim.io/doc/user/{file}.html#{tag}")
+    } else {
+        format!("No help found for {tag}!")
+    };
+    room.send(RoomMessageEventContent::text_plain(message), None)
+        .await
+        .unwrap();
 }
