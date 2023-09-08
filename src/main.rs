@@ -15,11 +15,14 @@ use std::process::exit;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // parse the command line for password
-    let Some(password) = env::args().nth(1) else {
-        eprintln!("Usage: {} <password>", env::args().next().unwrap());
+    // parse the command line for the password file
+    let Some(password_file) = env::args().nth(1) else {
+        eprintln!("Usage: {} <password-file>", env::args().next().unwrap());
         exit(1)
     };
+
+    let binding = tokio::fs::read_to_string(password_file).await.unwrap();
+    let password = binding.trim();
 
     let username = user_id!("@nvim-bot:matrix.org");
     let client = Client::builder()
@@ -27,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
         .build()
         .await?;
 
-    client.login_username(username, &password).send().await?;
+    client.login_username(username, password).send().await?;
 
     client.sync_once(SyncSettings::default()).await.unwrap();
 
