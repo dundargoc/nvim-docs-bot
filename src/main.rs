@@ -71,7 +71,6 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
     let Some(msg) = msg.strip_prefix(trigger) else {
         return;
     };
-    let tag_input = msg.trim();
 
     if room.name() != Some("nvim-bot-test".to_string()) {
         room.send(RoomMessageEventContent::text_plain("Not here dumbass, do it in the test room: https://matrix.to/#/#nvim-bot-test:matrix.org"), None)
@@ -93,7 +92,16 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         tags.insert(tag, file);
     }
 
-    let index = match vec.binary_search(&tag_input) {
+    // remove trailing blanks
+    let msg = msg.trim();
+
+    match msg {
+        "" => "help.txt",
+        msg => msg,
+    };
+
+    let tag = msg;
+    let index = match vec.binary_search(&tag) {
         Ok(index) | Err(index) => index
     };
     let tag = vec[index];
