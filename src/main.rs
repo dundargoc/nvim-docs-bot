@@ -71,6 +71,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
     let Some(tag_input) = msg_body.strip_prefix(trigger) else {
         return;
     };
+    let tag_input = tag_input.trim();
 
     if room.name() != Some("nvim-bot-test".to_string()) {
         room.send(RoomMessageEventContent::text_plain("Not here dumbass, do it in the test room: https://matrix.to/#/#nvim-bot-test:matrix.org"), None)
