@@ -72,6 +72,14 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         return;
     };
 
+    if room.name() != Some("nvim-bot-test".to_string()) {
+        room.send(RoomMessageEventContent::text_plain("Not here dumbass, do it in the test room: https://matrix.to/#/#nvim-bot-test:matrix.org"), None)
+        .await
+        .unwrap();
+
+        return;
+    };
+
     let mut vec = Vec::new();
 
     let mut tags = HashMap::new();
