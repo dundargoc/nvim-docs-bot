@@ -68,19 +68,26 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
 
     // Add space after the "h" to prevent message like "!hello" to trigger
     let trigger = "!h ";
-    let Some(tag) = msg_body.strip_prefix(trigger) else {
+    let Some(tag_input) = msg_body.strip_prefix(trigger) else {
         return;
     };
+
+    let mut vec = Vec::new();
 
     let mut tags = HashMap::new();
     let text = tokio::fs::read_to_string("src/tags").await.unwrap();
     for line in text.lines() {
         let line_split = line.split_whitespace().collect::<Vec<&str>>();
         let tag = line_split[0];
+        vec.push(tag);
         let file = line_split[1].replace(".txt", "");
         tags.insert(tag, file);
     }
 
+    let index = match vec.binary_search(&tag_input) {
+        Ok(index) | Err(index) => index
+    };
+    let tag = vec[index];
     let message = if let Some(file) = tags.get(tag) {
         format!("https://neovim.io/doc/user/{file}.html#{tag}")
     } else {
