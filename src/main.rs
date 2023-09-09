@@ -61,8 +61,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         return;
     };
 
-    let MessageType::Text(TextMessageEventContent { body: msg, .. }) = event.content.msgtype
-    else {
+    let MessageType::Text(TextMessageEventContent { body: msg, .. }) = event.content.msgtype else {
         return;
     };
 
@@ -92,8 +91,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         tags.insert(tag, file);
     }
 
-    // remove trailing blanks
-    let msg = msg.trim();
+    let msg = ex_help(msg).await;
 
     match msg {
         "" => "help.txt",
@@ -102,7 +100,7 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
 
     let tag = msg;
     let index = match vec.binary_search(&tag) {
-        Ok(index) | Err(index) => index
+        Ok(index) | Err(index) => index,
     };
     let tag = vec[index];
     let message = if let Some(file) = tags.get(tag) {
@@ -113,4 +111,10 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
     room.send(RoomMessageEventContent::text_plain(message), None)
         .await
         .unwrap();
+}
+
+async fn ex_help(msg: &str) -> &str {
+    // remove trailing blanks
+    let msg = msg.trim();
+    msg
 }
