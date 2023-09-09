@@ -61,17 +61,17 @@ async fn on_room_message(event: OriginalSyncRoomMessageEvent, room: Room) {
         return;
     };
 
-    let MessageType::Text(TextMessageEventContent { body: msg_body, .. }) = event.content.msgtype
+    let MessageType::Text(TextMessageEventContent { body: msg, .. }) = event.content.msgtype
     else {
         return;
     };
 
     // Add space after the "h" to prevent message like "!hello" to trigger
     let trigger = "!h ";
-    let Some(tag_input) = msg_body.strip_prefix(trigger) else {
+    let Some(msg) = msg.strip_prefix(trigger) else {
         return;
     };
-    let tag_input = tag_input.trim();
+    let tag_input = msg.trim();
 
     if room.name() != Some("nvim-bot-test".to_string()) {
         room.send(RoomMessageEventContent::text_plain("Not here dumbass, do it in the test room: https://matrix.to/#/#nvim-bot-test:matrix.org"), None)
